@@ -216,16 +216,76 @@ def classifyPerson():
 
 
 
+def img2vector(filename):
+    """
+    字符图像转化为向量
+    :param filename:文件名称
+    :return:转化后的向量
+    """
+    # 提前创建返回的向量1*1024
+    returnVector = np.zeros((1,1024))
+    fr = open(filename)
+    # 循环读出每行
+    for i in range(32):
+        # 每行转化为列表
+        lineStr = fr.readline()
+        # 循环读入每行前32个元素
+        for j in range(32):
+            # 依次将每个元素放入返回向量
+            returnVector[0,i*32+j] = int(lineStr[j])
+    return returnVector
+
+def handwritingClassTest():
+    """
+    手写数字识别测试算法
+    """
+    # 创建类别标签
+    hwLabels = []
+    # 将给定目录的文件名加载到列表里
+    trainingFileList = listdir('digits/trainingDigits')
+    # 计算文件个数
+    m = len(trainingFileList)
+    # 创建空的训练矩阵
+    trainingMat = np.zeros((m,1024))
+    # 将目录下的每个文件转化为向量保存在训练矩阵中
+    for i in range(m):
+        # 从列表中取出文件名
+        fileNameStr = trainingFileList[i]
+        # 对文件名处理，切割
+        fileStr = fileNameStr.split('.')[0]
+        classNumStr = int(fileStr.split('_')[0])
+        # 将从文件名提取出的类别保存在类别向量里
+        hwLabels.append(classNumStr)
+        trainingMat[i,:] = img2vector('digits/trainingDigits/%s'%(fileNameStr))
+    # 对测试集进行同样的操作，由于值在0-1之间，不需要归一化
+    testFileList = listdir('digits/testDigits')
+    mTest = len(testFileList)
+    errorCount = 0.0
+    for i in range(mTest):
+        fileNameStr = testFileList[i]
+        fileStr = fileNameStr.split('.')[0]
+        classNumStr = int(fileStr.split('_')[0])
+        # 导出，测试向量
+        vectorUnderTest = img2vector('digits/testDigits/%s'%(fileNameStr))
+        # 得到分类结果
+        classifilerResult = classify0(vectorUnderTest,trainingMat,hwLabels,3)
+        print('分类结果为：%d，真实结果为：%d'%(classifilerResult,classNumStr))
+        if(classifilerResult != classNumStr):
+            errorCount += 1
+    print('\n总的错误个数为：%d'%errorCount)
+    print('\n总的错误率为：%f'%(errorCount/float(mTest)))
+
+
 if __name__ == '__main__':
     start = time.time()
-    datingDataMat,datingLabels = file2matrix('datingTestSet2.txt')
-    # 数据可视化
-    showdatas(datingDataMat, datingLabels)
-    normMat,ranges,minVals =autoNorm(datingDataMat)
-    # 测试算法
-    datingClassTest()
-    # classifyPerson()
+    # datingDataMat,datingLabels = file2matrix('datingTestSet2.txt')
+    # # 数据可视化
+    # showdatas(datingDataMat, datingLabels)
+    # normMat,ranges,minVals =autoNorm(datingDataMat)
+    # # 测试算法
+    # datingClassTest()
+    # # classifyPerson()
+    # testVector = img2vector('digits/testDigits/0_13.txt')
+    handwritingClassTest()
     end = time.time()
     print('<运行时间为：%fs>'%(float(end-start)))
-
-
